@@ -16,12 +16,13 @@
   <%== render("components/page_header", locals: { title: "Create Virtual Machine" }) %>
 </div>
 
-<div class="grid gap-6">
-  <form action="<%= "#{@project_data[:path]}/vm" %>" method="POST">
-    <!-- YYY: need a better way to manage coupling of routes and erbs -->
-    <%== csrf_tag("#{@project_data[:path]}/vm") %>
+<form action="<%= "#{@project_data[:path]}/vm" %>" method="POST">
+  <!-- YYY: need a better way to manage coupling of routes and erbs -->
+  <%== csrf_tag("#{@project_data[:path]}/vm") %>
+
+  <div class="grid grid-cols-12 gap-6">
     <!-- Create Card -->
-    <div class="overflow-hidden rounded-lg shadow ring-1 ring-black ring-opacity-5 bg-white divide-y divide-gray-200">
+    <div class="col-span-full lg:col-span-8 overflow-hidden rounded-lg shadow ring-1 ring-black ring-opacity-5 bg-white divide-y divide-gray-200">
       <div class="px-4 py-5 sm:p-6">
         <div class="space-y-12">
           <div>
@@ -202,5 +203,57 @@
         </div>
       </div>
     </div>
-  </form>
-</div>
+    <!-- Price Summary Card -->
+    <div class="sticky top-20 h-fit col-span-full lg:col-span-4 overflow-hidden rounded-lg shadow ring-1 ring-black ring-opacity-5 bg-white divide-y divide-gray-200">
+    <div class="border-b border-gray-200 bg-white px-2 sm:pl-4 py-3 sm:px-6">
+      <h3 class="text-base font-semibold leading-6 text-gray-900">Price Summary</h3>
+    </div>
+
+      <table class="min-w-full divide-y divide-gray-300">
+        <tbody class="divide-y divide-gray-200 bg-white">
+          <tr>
+              <td class="whitespace-nowrap py-2 pl-2 pr-3 text-sm font-medium text-gray-900 sm:pl-4" scope="row">Provider</td>
+              <td class="whitespace-nowrap px-3 py-2 text-sm text-gray-500">Hetzner</td>
+              <td class="whitespace-nowrap py-2 pl-3 pr-4 text-right text-sm sm:pr-6 text-gray-500"></td>
+          </tr>
+          <tr>
+              <td class="whitespace-nowrap py-2 pl-2 pr-3 text-sm font-medium text-gray-900 sm:pl-4" scope="row">Location</td>
+              <td class="whitespace-nowrap px-3 py-2 text-sm text-gray-500">Germany</td>
+              <td class="whitespace-nowrap py-2 pl-3 pr-4 text-right text-sm sm:pr-6 text-gray-500"></td>
+          </tr>
+          <tr>
+              <td class="whitespace-nowrap py-2 pl-2 pr-3 text-sm font-medium text-gray-900 sm:pl-4" scope="row">Size</td>
+              <td class="whitespace-nowrap px-3 py-2 text-sm text-gray-500">standard-2</td>
+              <td class="whitespace-nowrap py-2 pl-3 pr-4 text-right text-sm sm:pr-6 text-gray-500">$13.42 <span class="text-xs">/mo</span></td>
+          </tr>
+          <tr>
+              <td class="whitespace-nowrap py-2 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-8" scope="row">vCPU</td>
+              <td class="whitespace-nowrap px-3 py-2 text-sm text-gray-500">2</td>
+              <td class="whitespace-nowrap py-2 pl-3 pr-4 text-right text-sm sm:pr-6 text-gray-500"></td>
+          </tr>
+          <tr>
+              <td class="whitespace-nowrap py-2 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-8" scope="row">Memory</td>
+              <td class="whitespace-nowrap px-3 py-2 text-sm text-gray-500">8 GB</td>
+              <td class="whitespace-nowrap py-2 pl-3 pr-4 text-right text-sm sm:pr-6 text-gray-500"></td>
+          </tr>
+          <tr>
+              <td class="whitespace-nowrap py-2 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-8" scope="row">Storage</td>
+              <td class="whitespace-nowrap px-3 py-2 text-sm text-gray-500">50 GB</td>
+              <td class="whitespace-nowrap py-2 pl-3 pr-4 text-right text-sm sm:pr-6 text-gray-500"></td>
+          </tr>
+          <tr>
+              <td class="whitespace-nowrap py-2 pl-2 pr-3 text-sm font-medium text-gray-900 sm:pl-4" scope="row">IPv4</td>
+              <td class="whitespace-nowrap px-3 py-2 text-sm text-gray-500">Yes</td>
+              <td class="whitespace-nowrap py-2 pl-3 pr-4 text-right text-sm sm:pr-6 text-gray-500">$2.00 <span class="text-xs">/mo</span></td>
+          </tr>
+          <tr>
+              <td colspan="2" class="whitespace-nowrap py-3 pl-2 pr-3 font-medium text-gray-900 sm:pl-4 text-right leading-6 text-lg" scope="row">
+                Montly Total
+              </td>
+              <td class="whitespace-nowrap py-3 pl-3 pr-4 text-right text-lg sm:pr-6 text-gray-700 font-bold">$15.42</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</form>
