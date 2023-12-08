@@ -370,12 +370,39 @@ RSpec.describe Prog::Vm::GithubRunner do
       expect { nx.wait }.to nap(0)
     end
 
-    it "cleans and registers the runner again if the runner-script is failed" do
-      expect(sshable).to receive(:cmd).with("systemctl show -p SubState --value runner-script").and_return("failed")
-      expect(client).to receive(:delete)
-      expect(github_runner).to receive(:update).with(runner_id: nil, ready_at: nil)
+    describe "if the runner-script is failed" do
+      before do
+        expect(sshable).to receive(:cmd).with("systemctl show -p SubState --value runner-script").and_return("failed")
+        expect(sshable).to receive(:cmd).with("journalctl -u runner-script --no-pager | grep -v jitconfig")
+      end
 
-      expect { nx.wait }.to hop("register_runner")
+      it "naps if the runner is busy" do
+        expect(client).to receive(:get).and_return({busy: true})
+        expect { nx.wait }.to nap(15)
+      end
+
+      it "destroys the runner if the workflow job is completed" do
+        expect(client).to receive(:get).and_return({busy: false})
+        expect(github_runner).to receive(:workflow_job).and_return({"id" => 123}).at_least(:once)
+        expect(client).to receive(:get).and_return({status: "completed"})
+        expect(github_runner).to receive(:incr_destroy)
+        expect { nx.wait }.to nap(0)
+      end
+
+      it "naps if the workflow job is not completed yet" do
+        expect(client).to receive(:get).and_return({busy: false})
+        expect(github_runner).to receive(:workflow_job).and_return({"id" => 123}).at_least(:once)
+        expect(client).to receive(:get).and_return({status: "in_progress"})
+        expect { nx.wait }.to nap(15)
+      end
+
+      it "provisions a spare runner and destroys the runner if doesn't have a workflow job" do
+        expect(client).to receive(:get).and_return({busy: false})
+        expect(github_runner).to receive(:workflow_job).and_return(nil)
+        expect(described_class).to receive(:assemble).and_return(instance_double(Strand, subject: instance_double(GithubRunner)))
+        expect(github_runner).to receive(:incr_destroy)
+        expect { nx.wait }.to nap(0)
+      end
     end
 
     it "naps if the runner-script is running" do

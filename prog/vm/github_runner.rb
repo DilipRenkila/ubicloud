@@ -122,6 +122,14 @@ class Prog::Vm::GithubRunner < Prog::Base
     end
   end
 
+  def runner_busy?
+    github_client.get("/repos/#{github_runner.repository_name}/actions/runners/#{github_runner.runner_id}")[:busy]
+  end
+
+  def workflow_job_completed?
+    github_client.get("/repos/#{github_runner.repository_name}/actions/jobs/#{github_runner.workflow_job["id"]}")[:status] == "completed"
+  end
+
   SERVICE_NAME = "runner-script"
 
   def vm
@@ -239,15 +247,34 @@ class Prog::Vm::GithubRunner < Prog::Base
       github_runner.incr_destroy
       nap 0
     when "failed"
-      github_client.delete("/repos/#{github_runner.repository_name}/actions/runners/#{github_runner.runner_id}")
-      github_runner.update(runner_id: nil, ready_at: nil)
-      hop_register_runner
+      # Log the runner journal logs for more information
+      vm.sshable.cmd("journalctl -u runner-script --no-pager | grep -v jitconfig")
+
+      if runner_busy?
+        Clog.emit("The runner is busy")
+        nap 15
+      end
+
+      if github_runner.workflow_job
+        if workflow_job_completed?
+          Clog.emit("The workflow job is completed, destroying the runner")
+          github_runner.incr_destroy
+          nap 0
+        else
+          Clog.emit("The workflow job is not completed yet")
+          nap 15
+        end
+      end
+
+      Clog.emit("The runner has no workflow job. Provisioning a spare runner and destroying this runner")
+      github_runner.provision_spare_runner
+      github_runner.incr_destroy
+      nap 0
     end
 
     # If the runner doesn't pick a job in two minutes, destroy it
     if github_runner.workflow_job.nil? && Time.now > github_runner.ready_at + 60 * 2
-      response = github_client.get("/repos/#{github_runner.repository_name}/actions/runners/#{github_runner.runner_id}")
-      unless response[:busy]
+      unless runner_busy?
         github_runner.incr_destroy
         Clog.emit("Destroying GithubRunner because it does not pick a job in two minutes") { {github_runner: github_runner.values} }
         nap 0

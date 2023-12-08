@@ -27,4 +27,8 @@ class GithubRunner < Sequel::Model
   def runner_url
     "http://github.com/#{repository_name}/settings/actions/runners/#{runner_id}" if runner_id
   end
+
+  def provision_spare_runner
+    Prog::Vm::GithubRunner.assemble(installation, repository_name: repository_name, label: label).subject
+  end
 end
