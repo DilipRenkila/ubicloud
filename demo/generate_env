@@ -15,6 +15,8 @@ CLOVER_COLUMN_ENCRYPTION_KEY="$(head -c 32 /dev/random | base64)"
 read -sp "Enter Hetzner Username: " HETZNER_USER
 echo ""
 read -sp "Enter Hetzner Password: " HETZNER_PASSWORD
+echo ""
+read -sp "Enter PostgreSQL Image SAS token: " PG_SAS_TOKEN
 
 cat <<EOT > $(dirname "$0")/.env
 RACK_ENV=development
@@ -28,4 +30,5 @@ POSTGRES_SERVICE_PROJECT_ID=c2dd42ae-1ddc-82d2-8907-e2136776cfd5
 POSTGRES_SERVICE_BLOB_STORAGE_ID=553c6522-1cef-828c-b18a-fd8ef83728fe
 HETZNER_USER="$HETZNER_USER"
 HETZNER_PASSWORD="$HETZNER_PASSWORD"
+PG_SAS_TOKEN="$PG_SAS_TOKEN"
 EOT

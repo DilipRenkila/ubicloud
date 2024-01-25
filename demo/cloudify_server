@@ -95,6 +95,18 @@ end
 
 puts "\n\nYour server is cloudified now. You can create virtual machines at '#{location}' in the cloud dashboard."
 
+puts "\n\nDownloading PostgreSQL OS image..."
+download_image_strand = strand.reload.subject.download_boot_image("postgres-ubuntu-2204", ENV["PG_SAS_TOKEN"])
+previous_state = nil
+while download_image_strand.reload.exitval.nil?
+  state = download_image_strand.reload.label
+  if previous_state != state
+    puts "#{Time.now} state: #{state}"
+    previous_state = state
+  end
+  sleep 2
+end
+
 exit 1 unless get_input("Do you want to provision a MinIO cluster? (y/n)") == "y"
 
 minio_strand = Prog::Minio::MinioClusterNexus.assemble(Config.minio_service_project_id, "minio-cluster", location, "pg-minio", 20, 1, 1, 1, "standard-2", Config.postgres_service_blob_storage_id)
