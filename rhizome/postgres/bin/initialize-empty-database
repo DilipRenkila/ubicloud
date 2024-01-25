@@ -4,4 +4,6 @@
 require_relative "../../common/lib/util"
 
 r "chown postgres /dat"
-r "pg_createcluster 16 main"
+r "pg_createcluster 16 main --start"
+
+r "sudo -u postgres psql -c 'CREATE EXTENSION lantern'"
