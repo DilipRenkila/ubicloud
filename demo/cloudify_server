@@ -55,7 +55,7 @@ unless Project[Config.postgres_service_project_id]
 end
 
 hostname = get_input("Enter hostname or IP address")
-location = select_option("Select provider and location", LOCATIONS, 1)
+location = select_option("Select provider and location", LOCATIONS, 2)
 server_id = get_input("Enter Hetzner server ID")
 
 puts "\n\nCloudifying '#{hostname}' server for '#{LOCATIONS[location]}' \n\n"
@@ -98,14 +98,15 @@ puts "\n\nYour server is cloudified now. You can create virtual machines at '#{l
 puts "\n\nDownloading PostgreSQL OS image..."
 download_image_strand = strand.reload.subject.download_boot_image("postgres-ubuntu-2204", ENV["PG_SAS_TOKEN"])
 previous_state = nil
-while download_image_strand.reload.exitval.nil?
-  state = download_image_strand.reload.label
+while (st = Strand[download_image_strand.id])
+  state = st.label
   if previous_state != state
     puts "#{Time.now} state: #{state}"
     previous_state = state
   end
   sleep 2
 end
+puts "Image downloaded."
 
 puts "\n\nCreating a MinIO cluster..."
 minio_strand = Prog::Minio::MinioClusterNexus.assemble(Config.minio_service_project_id, "minio-cluster", location, "pg-minio", 20, 1, 1, 1, "standard-2", Config.postgres_service_blob_storage_id)
@@ -117,3 +118,4 @@ while (state = minio_strand.reload.label) != "wait"
   end
   sleep 2
 end
+puts "MinIO cluster created."
