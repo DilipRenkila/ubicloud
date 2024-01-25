@@ -8,7 +8,7 @@ class Prog::Minio::MinioClusterNexus < Prog::Base
   semaphore :destroy, :reconfigure
 
   def self.assemble(project_id, cluster_name, location, admin_user,
-    storage_size_gib, pool_count, server_count, drive_count, vm_size)
+    storage_size_gib, pool_count, server_count, drive_count, vm_size, id)
     unless (project = Project[project_id])
       fail "No existing project"
     end
@@ -24,13 +24,13 @@ class Prog::Minio::MinioClusterNexus < Prog::Base
         name: "#{cluster_name}-subnet",
         location: location
       )
-      minio_cluster = MinioCluster.create_with_id(
+      minio_cluster = MinioCluster.create(
         name: cluster_name,
         location: location,
         admin_user: admin_user,
         admin_password: SecureRandom.urlsafe_base64(15),
         private_subnet_id: subnet_st.id
-      )
+      ) { _1.id = id }
       minio_cluster.associate_with_project(project)
 
       per_pool_server_count = server_count / pool_count

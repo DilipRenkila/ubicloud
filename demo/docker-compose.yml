@@ -18,6 +18,8 @@ services:
 
   db-migrator:
     image: ubicloud/ubicloud:latest
+    build:
+      context: ../
     container_name: ubicloud-db-migrator
     depends_on:
       postgres:
@@ -27,6 +29,8 @@ services:
 
   app:
     image: ubicloud/ubicloud:latest
+    build:
+      context: ../
     container_name: ubicloud-app
     depends_on:
       db-migrator:

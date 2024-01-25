@@ -46,12 +46,21 @@ def select_option(msg, options, default = nil)
   selected
 end
 
+unless Project[Config.minio_service_project_id]
+  Project.create(name: "minio-project", provider: "hetzner") { _1.id = Config.minio_service_project_id }.tap { _1.associate_with_project(_1) }
+end
+
+unless Project[Config.postgres_service_project_id]
+  Project.create(name: "pg-project", provider: "hetzner") { _1.id = Config.postgres_service_project_id }.tap { _1.associate_with_project(_1) }
+end
+
 hostname = get_input("Enter hostname or IP address")
 location = select_option("Select provider and location", LOCATIONS, 1)
+server_id = get_input("Enter Hetzner server ID")
 
 puts "\n\nCloudifying '#{hostname}' server for '#{LOCATIONS[location]}' \n\n"
 
-strand = Prog::Vm::HostNexus.assemble(hostname, location: location)
+strand = Prog::Vm::HostNexus.assemble(hostname, location: location, provider: "hetzner", hetzner_server_identifier: server_id)
 
 puts "Waiting public SSH keys\n\n"
 until (ssh_key = strand.reload.subject.sshable.keys.map(&:public_key).first)
@@ -85,3 +94,16 @@ rescue Timeout::Error
 end
 
 puts "\n\nYour server is cloudified now. You can create virtual machines at '#{location}' in the cloud dashboard."
+
+exit 1 unless get_input("Do you want to provision a MinIO cluster? (y/n)") == "y"
+
+minio_strand = Prog::Minio::MinioClusterNexus.assemble(Config.minio_service_project_id, "minio-cluster", location, "pg-minio", 20, 1, 1, 1, "standard-2", Config.postgres_service_blob_storage_id)
+puts "Waiting for minio cluster to be provisioned"
+previous_state = nil
+while (state = minio_strand.reload.label) != "wait"
+  if previous_state != state
+    puts "#{Time.now} state: #{state}"
+    previous_state = state
+  end
+  sleep 2
+end
