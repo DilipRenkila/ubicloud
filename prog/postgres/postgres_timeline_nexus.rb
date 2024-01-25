@@ -101,8 +101,8 @@ class Prog::Postgres::PostgresTimelineNexus < Prog::Base
     DB.transaction do
       admin_client = Minio::Client.new(
         endpoint: postgres_timeline.blob_storage_endpoint,
-        access_key: Config.postgres_service_blob_storage_access_key,
-        secret_key: Config.postgres_service_blob_storage_secret_key
+        access_key: postgres_timeline.blob_storage.admin_user,
+        secret_key: postgres_timeline.blob_storage.admin_password
       )
 
       # Setup user keys and policy for the timeline
