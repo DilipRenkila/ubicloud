@@ -26,7 +26,7 @@ FROM ruby:3.2.2-alpine3.17
 # - postgresql-client: Required for postgresql gem at runtime
 # - foreman: Helps to start different parts of app based on Procfile
 RUN apk update --no-cache && \
-    apk add tzdata curl postgresql-client --no-cache && \
+    apk add tzdata curl postgresql-client gcompat --no-cache && \
     gem install foreman
 
 RUN adduser -D ubicloud && \
