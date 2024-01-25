@@ -28,7 +28,7 @@ class Prog::DownloadBootImage < Prog::Base
     case sshable.cmd("common/bin/daemonizer --check download_#{image_name.shellescape}")
     when "Succeeded"
       sshable.cmd("common/bin/daemonizer --clean download_#{image_name.shellescape}")
-      hop_learn_storage
+      hop_activate_host
     when "NotStarted"
       sshable.cmd("common/bin/daemonizer 'host/bin/download-boot-image #{image_name.shellescape} #{custom_url.shellescape}' download_#{image_name.shellescape}")
     when "Failed"
@@ -36,30 +36,6 @@ class Prog::DownloadBootImage < Prog::Base
     end
 
     nap 15
-  end
-
-  label def learn_storage
-    bud Prog::LearnStorage
-    hop_wait_learn_storage
-  end
-
-  label def wait_learn_storage
-    reap.each do |st|
-      case st.prog
-      when "LearnStorage"
-        kwargs = {
-          total_storage_gib: st.exitval.fetch("total_storage_gib"),
-          available_storage_gib: st.exitval.fetch("available_storage_gib")
-        }
-
-        vm_host.update(**kwargs)
-      end
-    end
-
-    if leaf?
-      hop_activate_host
-    end
-    donate
   end
 
   label def activate_host
