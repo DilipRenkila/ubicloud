@@ -50,14 +50,14 @@ class Prog::Vm::HostNexus < Prog::Base
   end
 
   label def prep
-    bud Prog::Vm::PrepHost
+    bud Prog::Vm::PrepHost unless already_prepped?
     bud Prog::LearnNetwork unless vm_host.net6
     bud Prog::LearnMemory
     bud Prog::LearnArch
     bud Prog::LearnCores
     bud Prog::LearnStorage
-    bud Prog::InstallDnsmasq
-    bud Prog::SetupSysstat
+    bud Prog::InstallDnsmasq unless already_prepped?
+    bud Prog::SetupSysstat unless already_prepped?
     hop_wait_prep
   end
 
@@ -94,9 +94,20 @@ class Prog::Vm::HostNexus < Prog::Base
     end
 
     if leaf?
+      # If returns zero, it's a match, this is a pre-prepared
+      # server, jump to verifying the hugepages already present,
+      # skipping reboot.
+      hop_verify_hugepages if already_prepped?
       hop_setup_hugepages
     end
     donate
+  end
+
+  def already_prepped?
+    sshable.cmd('fgrep hugetlb_free_vmemmap /etc/default/grub')
+    true
+  rescue Sshable::SshError
+    false
   end
 
   label def setup_hugepages
