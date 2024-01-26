@@ -97,7 +97,18 @@ class Prog::Vm::HostNexus < Prog::Base
       # If returns zero, it's a match, this is a pre-prepared
       # server, jump to verifying the hugepages already present,
       # skipping reboot.
-      hop_verify_hugepages if already_prepped?
+      if already_prepped?
+        # Fake up a record created as a side effect in
+        # Prog::Storage::SetupSpdk: it needs to be there to allow the
+        # allocator to work.
+        SpdkInstallation.create(
+          version: Config.spdk_version,
+          allocation_weight: 100,
+          vm_host_id: vm_host.id
+        ) { _1.id = SpdkInstallation.generate_uuid }
+
+        hop_verify_hugepages
+      end
       hop_setup_hugepages
     end
     donate
