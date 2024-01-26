@@ -60,17 +60,25 @@ server_id = get_input("Enter Hetzner server ID")
 
 puts "\n\nCloudifying '#{hostname}' server for '#{LOCATIONS[location]}' \n\n"
 
-strand = Prog::Vm::HostNexus.assemble(hostname, location: location, provider: "hetzner", hetzner_server_identifier: server_id)
+# Check if the host is already in the database
+sshable = Sshable.where(host: hostname).first
+if sshable.nil?
+  strand = Prog::Vm::HostNexus.assemble(hostname, location: location, provider: "hetzner", hetzner_server_identifier: server_id)
 
-puts "Waiting public SSH keys\n\n"
-until (ssh_key = strand.reload.subject.sshable.keys.map(&:public_key).first)
-  sleep 2
+  puts "Waiting public SSH keys\n\n"
+  until (ssh_key = strand.reload.subject.sshable.keys.map(&:public_key).first)
+    sleep 2
+  end
+  puts "Add following public SSH key to '/root/.ssh/authorized_keys' on your machine\n\n"
+  puts ssh_key
+
+  print "\n\nPress enter after you add the above SSH key to your machine\n\n"
+  gets.chomp
+else
+  vm_host = VmHost[sshable.id]
+  strand = vm_host.strand
+  strand.update(label: "prep")
 end
-puts "Add following public SSH key to '/root/.ssh/authorized_keys' on your machine\n\n"
-puts ssh_key
-
-print "\n\nPress enter after you add the above SSH key to your machine\n\n"
-gets.chomp
 
 begin
   Timeout.timeout(10 * 60) do

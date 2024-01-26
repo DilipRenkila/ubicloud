@@ -55,7 +55,7 @@ class Prog::Vm::HostNexus < Prog::Base
     bud Prog::LearnMemory
     bud Prog::LearnArch
     bud Prog::LearnCores
-    bud Prog::LearnStorage
+    bud Prog::LearnStorage unless already_prepped?
     bud Prog::InstallDnsmasq unless already_prepped?
     bud Prog::SetupSysstat unless already_prepped?
     hop_wait_prep
