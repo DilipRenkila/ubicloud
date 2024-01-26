@@ -115,7 +115,7 @@ class Prog::Vm::HostNexus < Prog::Base
   end
 
   def already_prepped?
-    sshable.cmd('fgrep hugetlb_free_vmemmap /etc/default/grub')
+    sshable.cmd("fgrep hugetlb_free_vmemmap /etc/default/grub")
     true
   rescue Sshable::SshError
     false
