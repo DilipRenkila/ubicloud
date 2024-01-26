@@ -93,29 +93,35 @@ rescue Timeout::Error
   exit 1
 end
 
-puts "\n\nYour server is cloudified now. You can create virtual machines at '#{location}' in the cloud dashboard."
+puts "\n\nYour server is cloudified now. You can create virtual machines at '#{location}' in the cloud dashboard.\n\n"
 
-puts "\n\nDownloading PostgreSQL OS image..."
-download_image_strand = strand.reload.subject.download_boot_image("postgres-ubuntu-2204", ENV["PG_SAS_TOKEN"])
-previous_state = nil
-while (st = Strand[download_image_strand.id])
-  state = st.label
-  if previous_state != state
-    puts "#{Time.now} state: #{state}"
-    previous_state = state
+begin
+  strand.subject.sshable.cmd("ls /var/storage/images/postgres-ubuntu-2204.raw")
+rescue Sshable::SshError
+  puts "\n\nDownloading PostgreSQL OS image..."
+  download_image_strand = strand.reload.subject.download_boot_image("postgres-ubuntu-2204", ENV["PG_SAS_TOKEN"])
+  previous_state = nil
+  while (st = Strand[download_image_strand.id])
+    state = st.label
+    if previous_state != state
+      puts "#{Time.now} state: #{state}"
+      previous_state = state
+    end
+    sleep 2
   end
-  sleep 2
 end
-puts "Image downloaded."
+puts "\n\nPostgreSQL OS image downloaded."
 
-puts "\n\nCreating a MinIO cluster..."
-minio_strand = Prog::Minio::MinioClusterNexus.assemble(Config.minio_service_project_id, "minio-cluster", location, "pg-minio", 20, 1, 1, 1, "standard-2", Config.postgres_service_blob_storage_id)
-previous_state = nil
-while (state = minio_strand.reload.label) != "wait"
-  if previous_state != state
-    puts "#{Time.now} state: #{state}"
-    previous_state = state
+unless MinioCluster[Config.postgres_service_blob_storage_id]
+  puts "\n\nCreating a MinIO cluster..."
+  minio_strand = Prog::Minio::MinioClusterNexus.assemble(Config.minio_service_project_id, "minio-cluster", location, "pg-minio", 20, 1, 1, 1, "standard-2", Config.postgres_service_blob_storage_id)
+  previous_state = nil
+  while (state = minio_strand.reload.label) != "wait"
+    if previous_state != state
+      puts "#{Time.now} state: #{state}"
+      previous_state = state
+    end
+    sleep 2
   end
-  sleep 2
 end
-puts "MinIO cluster created."
+puts "\n\nMinIO cluster created."
