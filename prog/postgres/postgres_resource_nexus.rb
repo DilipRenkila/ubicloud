@@ -127,7 +127,8 @@ class Prog::Postgres::PostgresResourceNexus < Prog::Base
 
   label def wait_server
     nap 5 if server.strand.label != "wait"
-    hop_create_billing_record
+    hop_create_billing_record if postgres_resource.active_billing_records.empty?
+    hop_wait
   end
 
   label def create_billing_record
