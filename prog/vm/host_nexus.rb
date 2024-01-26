@@ -98,15 +98,6 @@ class Prog::Vm::HostNexus < Prog::Base
       # server, jump to verifying the hugepages already present,
       # skipping reboot.
       if already_prepped?
-        # Fake up a record created as a side effect in
-        # Prog::Storage::SetupSpdk: it needs to be there to allow the
-        # allocator to work.
-        SpdkInstallation.create(
-          version: Config.spdk_version,
-          allocation_weight: 100,
-          vm_host_id: vm_host.id
-        ) { _1.id = SpdkInstallation.generate_uuid }
-
         hop_verify_hugepages
       end
       hop_setup_hugepages
@@ -209,7 +200,7 @@ class Prog::Vm::HostNexus < Prog::Base
       used_hugepages_1g: total_hugepages - free_hugepages + total_vm_mem_gib
     )
 
-    hop_start_vms
+    hop_wait
   end
 
   label def start_vms
