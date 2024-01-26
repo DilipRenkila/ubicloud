@@ -89,7 +89,7 @@ begin
         puts "#{Time.now} state: #{state}"
         previous_state = state
       end
-      sleep 2
+      sleep 0.01
     end
   end
 rescue Timeout::Error
