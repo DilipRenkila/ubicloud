@@ -21,33 +21,40 @@ class Prog::Postgres::PostgresResourceNexus < Prog::Base
     Validation.validate_name(name)
     Validation.validate_location(location, project.provider)
 
-    DB.transaction do
-      superuser_password, timeline_id, timeline_access = if parent_id.nil?
-        [SecureRandom.urlsafe_base64(15), Prog::Postgres::PostgresTimelineNexus.assemble.id, "push"]
-      else
-        unless (parent = PostgresResource[parent_id])
-          fail "No existing parent"
+    postgres_resource = PostgresResource.where(name: name).first
+
+    if postgres_resource.nil?
+      DB.transaction do
+        superuser_password, timeline_id, timeline_access = if parent_id.nil?
+          [SecureRandom.urlsafe_base64(15), Prog::Postgres::PostgresTimelineNexus.assemble.id, "push"]
+        else
+          unless (parent = PostgresResource[parent_id])
+            fail "No existing parent"
+          end
+          restore_target = Validation.validate_date(restore_target, "restore_target")
+          parent.timeline.refresh_earliest_backup_completion_time
+          unless (earliest_restore_time = parent.timeline.earliest_restore_time) && earliest_restore_time <= restore_target &&
+              parent.timeline.latest_restore_time && restore_target <= parent.timeline.latest_restore_time
+            fail Validation::ValidationFailed.new({restore_target: "Restore target must be between #{earliest_restore_time} and #{parent.timeline.latest_restore_time}"})
+          end
+          [parent.superuser_password, parent.timeline.id, "fetch"]
         end
-        restore_target = Validation.validate_date(restore_target, "restore_target")
-        parent.timeline.refresh_earliest_backup_completion_time
-        unless (earliest_restore_time = parent.timeline.earliest_restore_time) && earliest_restore_time <= restore_target &&
-            parent.timeline.latest_restore_time && restore_target <= parent.timeline.latest_restore_time
-          fail Validation::ValidationFailed.new({restore_target: "Restore target must be between #{earliest_restore_time} and #{parent.timeline.latest_restore_time}"})
-        end
-        [parent.superuser_password, parent.timeline.id, "fetch"]
+
+        postgres_resource = PostgresResource.create_with_id(
+          project_id: project_id, location: location, name: name,
+          target_vm_size: target_vm_size, target_storage_size_gib: target_storage_size_gib,
+          superuser_password: superuser_password, parent_id: parent_id,
+          restore_target: restore_target
+        )
+        postgres_resource.associate_with_project(project)
+
+        Prog::Postgres::PostgresServerNexus.assemble(resource_id: postgres_resource.id, timeline_id: timeline_id, timeline_access: timeline_access)
+
+        Strand.create(prog: "Postgres::PostgresResourceNexus", label: "start") { _1.id = postgres_resource.id }
       end
-
-      postgres_resource = PostgresResource.create_with_id(
-        project_id: project_id, location: location, name: name,
-        target_vm_size: target_vm_size, target_storage_size_gib: target_storage_size_gib,
-        superuser_password: superuser_password, parent_id: parent_id,
-        restore_target: restore_target
-      )
+    else
       postgres_resource.associate_with_project(project)
-
-      Prog::Postgres::PostgresServerNexus.assemble(resource_id: postgres_resource.id, timeline_id: timeline_id, timeline_access: timeline_access)
-
-      Strand.create(prog: "Postgres::PostgresResourceNexus", label: "start") { _1.id = postgres_resource.id }
+      postgres_resource.strand.update(label: "start")
     end
   end
 
