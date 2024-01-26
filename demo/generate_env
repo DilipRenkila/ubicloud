@@ -1,6 +1,14 @@
 #!/usr/bin/env sh
 
+CACHED_FILE="$HOME/demo.env"
 FILE="$(dirname "$0")/.env"
+
+if [ -f $CACHED_FILE ]; then
+    cp $CACHED_FILE $FILE
+    echo "$FILE environment file generated."
+    exit 0
+fi
+cp $FILE $CACHED_FILE
 
 if [ -f "$FILE" ]; then
     echo "$FILE environment file exists."
@@ -32,3 +40,6 @@ HETZNER_USER="$HETZNER_USER"
 HETZNER_PASSWORD="$HETZNER_PASSWORD"
 PG_SAS_TOKEN="$PG_SAS_TOKEN"
 EOT
+
+cp $FILE $CACHED_FILE
+echo "$FILE environment file generated."
