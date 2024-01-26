@@ -8,7 +8,6 @@ if [ -f $CACHED_FILE ]; then
     echo "$FILE environment file generated."
     exit 0
 fi
-cp $FILE $CACHED_FILE
 
 if [ -f "$FILE" ]; then
     echo "$FILE environment file exists."
