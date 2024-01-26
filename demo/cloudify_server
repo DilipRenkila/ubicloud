@@ -56,13 +56,14 @@ end
 
 hostname = get_input("Enter hostname or IP address")
 location = select_option("Select provider and location", LOCATIONS, 2)
-server_id = get_input("Enter Hetzner server ID")
 
 puts "\n\nCloudifying '#{hostname}' server for '#{LOCATIONS[location]}' \n\n"
 
 # Check if the host is already in the database
 sshable = Sshable.where(host: hostname).first
 if sshable.nil?
+  server_id = get_input("Enter Hetzner server ID")
+
   strand = Prog::Vm::HostNexus.assemble(hostname, location: location, provider: "hetzner", hetzner_server_identifier: server_id)
 
   puts "Waiting public SSH keys\n\n"
