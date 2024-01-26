@@ -107,7 +107,7 @@ begin
   strand.subject.sshable.cmd("ls /var/storage/images/postgres-ubuntu-2204.raw")
 rescue Sshable::SshError
   puts "\n\nDownloading PostgreSQL OS image..."
-  download_image_strand = strand.reload.subject.download_boot_image("postgres-ubuntu-2204", ENV["PG_SAS_TOKEN"])
+  download_image_strand = strand.reload.subject.download_boot_image("postgres-ubuntu-2204", "https://ubicloudgithubimage.blob.core.windows.net/public-images/ubuntu2204-postgres-20240125.1.0.vhd")
   previous_state = nil
   while (st = Strand[download_image_strand.id])
     state = st.label
