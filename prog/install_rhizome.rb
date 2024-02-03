@@ -3,6 +3,9 @@
 class Prog::InstallRhizome < Prog::Base
   subject_is :sshable
 
+  required_input :target_folder
+  optional_input :install_specs, false
+
   label def start
     require "rubygems/package"
     require "stringio"
@@ -10,8 +13,8 @@ class Prog::InstallRhizome < Prog::Base
     tar = StringIO.new
     Gem::Package::TarWriter.new(tar) do |writer|
       base = Config.root + "/rhizome"
-      Dir.glob(["Gemfile", "Gemfile.lock", "common/**/*", "#{frame["target_folder"]}/**/*"], base: base).map do |file|
-        next if !frame["install_specs"] && file.end_with?("_spec.rb")
+      Dir.glob(["Gemfile", "Gemfile.lock", "common/**/*", "#{target_folder}/**/*"], base: base).map do |file|
+        next if !install_specs && file.end_with?("_spec.rb")
         full_path = base + "/" + file
         stat = File.stat(full_path)
         if stat.directory?

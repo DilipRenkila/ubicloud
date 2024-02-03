@@ -3,13 +3,8 @@
 class Prog::DownloadBootImage < Prog::Base
   subject_is :sshable, :vm_host
 
-  def image_name
-    @image_name ||= frame.fetch("image_name")
-  end
-
-  def custom_url
-    @custom_url ||= frame["custom_url"]
-  end
+  required_input :image_name
+  optional_input :custom_url
 
   def blob_storage_client
     @blob_storage_client ||= Minio::Client.new(

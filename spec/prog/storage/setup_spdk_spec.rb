@@ -79,7 +79,7 @@ RSpec.describe Prog::Storage::SetupSpdk do
     end
 
     it "doesn't reserve a hugepage if service didn't start" do
-      allow(setup_spdk).to receive(:frame).and_return({"version" => spdk_version, "start_service" => false})
+      allow(setup_spdk).to receive(:frame).and_return({"version" => spdk_version, "should_start_service" => false})
       expect { setup_spdk.update_database }.to exit({"msg" => "SPDK was setup"})
       expect(vm_host.reload.used_hugepages_1g).to eq(0)
     end
