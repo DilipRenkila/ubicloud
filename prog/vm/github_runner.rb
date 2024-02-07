@@ -140,7 +140,7 @@ class Prog::Vm::GithubRunner < Prog::Base
     command = <<~COMMAND
       # runner unix user needed access to manipulate the Docker daemon.
       # Default GitHub hosted runners have additional adm,systemd-journal groups.
-      sudo usermod -a -G docker,adm,systemd-journal runner
+      sudo usermod -g docker -G adm,systemd-journal runner
 
       # Some configuration files such as $PATH related to the user's home directory
       # need to be changed. GitHub recommends to run post-generation scripts after
@@ -198,7 +198,7 @@ class Prog::Vm::GithubRunner < Prog::Base
 
     # We initiate an API call and a SSH connection under the same label to avoid
     # having to store the encoded_jit_config.
-    vm.sshable.cmd("sudo -- xargs -I{} -- systemd-run --uid runner --gid runner " \
+    vm.sshable.cmd("sudo -- xargs -I{} -- systemd-run --uid runner --gid docker " \
                    "--working-directory '/home/runner' --unit #{SERVICE_NAME} --remain-after-exit -- " \
                    "./actions-runner/run-withenv.sh {}",
       stdin: response[:encoded_jit_config])
