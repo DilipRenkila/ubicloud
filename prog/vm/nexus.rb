@@ -444,21 +444,14 @@ WHERE (SELECT max(available_storage_gib) FROM storage_device WHERE storage_devic
   end
 
   label def wait_sshable
-    case host.sshable.cmd("common/bin/daemonizer --check wait_sshable_#{q_vm}")
-    when "Succeeded"
-      host.sshable.cmd("common/bin/daemonizer --clean wait_sshable_#{q_vm}")
-
-      hop_create_billing_record
-    when "NotStarted", "Failed"
-      # I considered removing wait_sshable altogether, but (very)
-      # occasionally helps us glean interesting information about boot
-      # problems.
+    begin
       prefix_len = vm.ephemeral_net6.netmask.prefix_len + 1
       source_ip = vm.ephemeral_net6.resize(prefix_len).next_sib.nth(3)
-      host.sshable.cmd("common/bin/daemonizer 'sudo host/bin/verify-sshable #{q_vm} #{source_ip} #{vm.ephemeral_net6.nth(2)}' wait_sshable_#{q_vm}")
+      host.sshable.cmd("sudo host/bin/verify-sshable #{q_vm} #{source_ip} #{vm.ephemeral_net6.nth(2)}")
+    rescue
+      nap 1
     end
-
-    nap 1
+    hop_create_billing_record
   end
 
   label def create_billing_record
