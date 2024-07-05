@@ -27,6 +27,10 @@ class Serializers::Vm < Serializers::Base
       )
     end
 
+    if options[:load_balancer]
+      base[:state] = DB[:load_balancers_vms].where(vm_id: vm.id).get(:state)
+    end
+
     base
   end
 end
